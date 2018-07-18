@@ -18,44 +18,9 @@
 - Setup rsa on system [SSH Key Setup](https://help.github.com/enterprise/2.10/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/ )
 - On the google cloud compute system, add the public ssh key that you obtained to the system. You can do this by clicking on edit for the instance
 - Login for the first time from the browser window
-- If you are logged in as Admin, then fine, else create a new user 
+- The following assumes you are logged in as a superuser with the username "Admin", if not change "Admin" to your username
+- We are assuming you are using a [google cloud organization] for managing permissions (https://cloud.google.com/resource-manager/docs/creating-managing-organization)
 
-```
-#Add User
-sudo useradd Admin
-# Create password etc
-
-# Add sudo privileges to user
-sudo usermod -a -G sudo Admin
-
-#change user to Admin
-su Admin
-
-#cd into their ssh directory
-cd ~/.ssh
-
-#change the authorized keys to add your local key
-nano authorized_keys
-```
-
-- Make a list of the ssh keys of all users you want to login to the remote system
-
-```
-# Add the keys to the authorized_keys file
-# A typical key looks as follows
-ssh-rsa AAAAB3N.....abcdef My Name <my.name@your_domain.com>
-```
-
-- Now log out of the webbrowser terminal
-- Login to terminal from git bash. Type 
-```
-ssh Admin@ip-address-of-remote
-
-#if that doesn't work
-ssh -i ~/.ssh/id_rsa Admin@ip-address-of-remote
-
-# Now you should be logged in
-```
 ---
 
 ## Getting the first working Superset version up

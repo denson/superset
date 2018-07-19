@@ -41,6 +41,7 @@ cd ~
 - Add the basic dependencies
 
 ```
+sudo apt-get update
 sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip libsasl2-dev libldap2-dev
 ```
 

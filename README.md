@@ -37,7 +37,6 @@
 
 - Install commands
 ```
-
 #Add installer user
 sudo adduser installer
 # make sure you remember the username and password
@@ -66,11 +65,8 @@ systemctl status nginx
 ```
 ## Getting the first working Superset version up
 
-- Setup the user who will be using the superset
+- Setup the user who will be controlling superset
 ```
-
-
-
 #Add User on who's account the superset will run
 sudo adduser flaskuser
 # make sure you remember the username and password
@@ -90,22 +86,26 @@ pwd
 ```
 sudo apt-get update
 sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip libsasl2-dev libldap2-dev
+sudo apt-get install htop
 ```
 
 - Install a virtualenvironment
 
 ```
 # Install virtualenv module
-pip install virtualenv
+sudo pip install virtualenv
 
-# Note: as this is being written there is a problem with the latest version of pip so don't upgrade pip.
+# Note: as this is being written there is a problem with the latest version of pip so don't upgrade pip for now.
 
 # Create venv a virtual environment named venv
 virtualenv venv
 
 
 # Activate venv
-$ . /home/flaskuser/venv/bin/activate
+cd /home/flaskuser/venv/bin/
+source activate
+
+
 
 ```
 
@@ -121,7 +121,7 @@ pip install --upgrade setuptools pip
 
 ```
 # Important note, don't use sudo on any of the below commands
-
+# TODO: add instructions for setting up postgres here
 # Install superset
 pip install superset
 

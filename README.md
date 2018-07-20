@@ -20,9 +20,8 @@
 - Setup rsa on system [SSH Key Setup](https://help.github.com/enterprise/2.10/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/ )
 - On the google cloud compute system, add the public ssh key that you obtained to the system. You can do this by clicking on edit for the instance
 - Login for the first time from the browser window
-- The following assumes you are logged in as a superuser with the username "Admin", if not change "Admin" to your username
-- We are assuming you are using a [google cloud organization](https://cloud.google.com/resource-manager/docs/creating-managing-organization) for managing permissions 
-
+- We are assuming you are using a [google cloud organization](https://cloud.google.com/resource-manager/docs/creating-managing-organization) for managing permissions to access the server
+- Alternatively, you can manage instance access with [OS login](https://cloud.google.com/compute/docs/instances/managing-instance-access)
 
 
 
@@ -38,27 +37,43 @@
 
 - Install commands
 ```
-# Install
+
+#Add installer user
+sudo adduser installer
+# make sure you remember the username and password
+
+# Add sudo privileges to user
+sudo usermod -a -G sudo installer
+
+#change user to installer
+su installer
+cd ~
+pwd
+# /home/installer
+
+# Install nginx
 sudo apt-get update
 sudo apt-get install nginx
 
-# Start and Reload
-sudo nginx -s start
-sudo nginx -s reload
-
-
-# Check status
+# Check nginx status
 systemctl status nginx
 # It should be running
+# hit ctr+c to exit status if necessary
+```
+- Test nginx by opening a web browser and entering http://your-instance-IP , you should get an nginx welcome screen
+- Note that https does not work yet, we will set that up later
 
-
+```
 ## Getting the first working Superset version up
 
 - Setup the user who will be using the superset
 ```
+
+
+
 #Add User on who's account the superset will run
-sudo useradd flaskuser
-# Create password etc
+sudo adduser flaskuser
+# make sure you remember the username and password
 
 # Add sudo privileges to user
 sudo usermod -a -G sudo flaskuser
@@ -66,6 +81,9 @@ sudo usermod -a -G sudo flaskuser
 # Change to that user and go to base directory
 su flaskuser
 cd ~
+pwd
+# /home/flaskuser
+
 ```
 - Add the basic dependencies
 
@@ -79,6 +97,8 @@ sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip
 ```
 # Install virtualenv module
 pip install virtualenv
+
+# Note: as this is being written there is a problem with the latest version of pip so don't upgrade pip.
 
 # Create venv a virtual environment named venv
 virtualenv venv

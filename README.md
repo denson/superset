@@ -8,8 +8,11 @@
 - Click on the top left and click on compute engine
 - Click on create instance.
 - Choose standard options.
-- 1 CPU Ubuntu 16.04 instance should work. Allow HTTP and HTTPS
+- 2 CPU Ubuntu 16.04 instance* should work. Allow HTTP and HTTPS 
 - The instance should be created.
+
+* 2 CPU's are needed because of this [nginx bug](https://bugs.launchpad.net/ubuntu/+source/nginx/+bug/1581864)
+
 ---
 
 ## Basic Machine Setup

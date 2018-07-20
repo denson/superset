@@ -19,7 +19,10 @@
 - On the google cloud compute system, add the public ssh key that you obtained to the system. You can do this by clicking on edit for the instance
 - Login for the first time from the browser window
 - The following assumes you are logged in as a superuser with the username "Admin", if not change "Admin" to your username
-- We are assuming you are using a [google cloud organization] for managing permissions (https://cloud.google.com/resource-manager/docs/creating-managing-organization)
+- We are assuming you are using a [google cloud organization](https://cloud.google.com/resource-manager/docs/creating-managing-organization) for managing permissions 
+
+
+
 
 ---
 

@@ -36,6 +36,7 @@
 ### Install Nginx
 
 - Install commands
+
 ```
 #Add installer user
 sudo adduser installer
@@ -115,13 +116,160 @@ source activate
 pip install --upgrade setuptools pip
 
 ```
+# TODO: add instructions for setting up postgres here
+
+
+
+
+
+## Setting up postgresql
+
+### References before starting:
+
+- [Linode Guide](https://www.linode.com/docs/databases/postgresql/how-to-install-postgresql-on-ubuntu-16-04)
+- [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-14-04)
+
+### Install basic stuff:
+
+- ensure in venv environment
+- pip install psycopg2
+```
+pip install psycopg2
+```
+
+### Get the postgres system up:
+
+- Download postgres
+```
+sudo apt-get update && sudo apt-get upgrade
+sudo apt-get install postgresql postgresql-contrib
+```
+- Create a postgres user
+
+```
+# By default postgres creates a user called postgres
+sudo -i -u postgres
+# Check postgres working
+psql
+>>> # Quit
+>>> \q
+# Get back into user with sudo access
+exit
+``` 
+- Create password for user postgres
+```
+sudo passwd postgres
+# Store somewhere safe
+```
+- Login to postgres user again
+
+```
+su - postgres
+# If above doesn't work, try sudo -i -u postgres
+
+# Create a user who will access the database. I am calling this user flaskuser
+createuser --pwprompt --interactive
+# When it asks whether user is superuser say yes
+# Save password securely
+
+# Create a database named superset
+createdb superset
+
+# Test the db.
+psql superset
+superset=# 
+#This is working 
+
+# Grant user access
+superset=# CREATE USER flaskuser WITH PASSWORD 'jw8s0F4';
+superset=# CREATE SCHEMA superset;
+superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO flaskuser;
+
+# exit
+superset=# \q
+```
+- Ensure you are still user postgres
+- Edit /etc/postgresql/9.5/main/pg_hba.conf
+```
+nano /etc/postgresql/9.5/main/pg_hba.conf
+```
+- Change the file as below
+```
+# "local" is for Unix domain socket connections only
+# local    all        all             peer
+# change above to 
+local    all        all             md5
+
+```
+- Return to normal unix shell as flaskuser
+```
+# exit postgres user
+exit
+
+# Restart postgresql service
+sudo service postgresql restart
+su - postgres
+
+# test the service
+psql -U flaskuser -W superset
+```
+
+- Check that postgres is working at any time (say after restart)
+```
+htop
+# if command doesn't work, then 'sudo apt-get install htop'
+```
+
+
+### Changing superset_config.py
+
+- Change the superset_config.py to reflect the following db changes:
+```
+# Change the line
+# SQLALCHEMY_DATABASE_URI = 'sqlite:////home/flaskuser/.superset/superset.db'
+# to
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localhost/superset'
+```
+
+### Check whether postgres working
+
+- Now do the following steps to ensure postgres working
+
+```
+# Login as flaskuser
+sudo su flaskuser
+
+# activate virtualenvironment
+cd ~
+. ./venv/bin/activate
+
+# Install superset again. This step can be skipped also
+pip install superset
+# Almost everything shoudl say already installed. Make sure no errors. 
+
+# Initialize the database
+superset db upgrade
+# This is the important part. Ensure the shell says it's pulling the superset_config file and also running on postgresql. If not go back to previous steps and ensure everything ok
+
+# Load the examples into new database
+superset load_examples
+
+# Create default roles and permissions in the new database
+superset init
+
+# Start the web server on port 80
+superset runserver -p 80
+```
+- Ensure working from a browser then close/interrupt the server by hitting ctrl+C
 
 - Now do the actual setup and see if it works
 - [Follow instructions from here](https://superset.incubator.apache.org/installation.html)
 
 ```
 # Important note, don't use sudo on any of the below commands
-# TODO: add instructions for setting up postgres here
+
+
+
 # Install superset
 pip install superset
 

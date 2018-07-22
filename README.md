@@ -32,7 +32,7 @@
 - What we are looking for on nginx is to run a reverse proxy. The actual server is gunicorn sitting in front of flask, which is the framework hosting superset
 - Some references for this section: [Nginx with Reverse Proxy ](https://www.nginx.com/resources/admin-guide/reverse-proxy/), [nginx.conf for optimized performance](https://www.linode.com/docs/web-servers/nginx/configure-nginx-for-optimized-performance), [ Setting up postgres nginx and gunicorn ](https://www.digitalocean.com/community/tutorials/how-to-set-up-django-with-postgres-nginx-and-gunicorn-on-debian-8 ),  [How to install nginx ](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-16-04)
 
- 
+
 ### Install Nginx
 
 - Install commands
@@ -60,13 +60,15 @@ systemctl status nginx
 # It should be running
 # hit ctr+c to exit status if necessary
 ```
-- Test nginx by opening a web browser and entering http://your-instance-IP , you should get an nginx welcome screen
-- Note that https does not work yet, we will set that up later
+- We don't have https set up yet but we can test nginx on http
+- Open a web browser and enter http://your-instance-IP , you should get an nginx welcome screen
 
-```
+
+
 ## Getting the first working Superset version up
-
+- This will create superset directories and config files we will be editing
 - Setup the user who will be controlling superset
+
 ```
 #Add User on who's account the superset will run
 sudo adduser flaskuser
@@ -87,6 +89,7 @@ pwd
 ```
 sudo apt-get update
 sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip libsasl2-dev libldap2-dev
+sudo apt-get install build-essential libssl-dev libffi-dev python3.5-dev python-pip libsasl2-dev libldap2-dev
 sudo apt-get install htop
 ```
 
@@ -106,8 +109,6 @@ virtualenv venv
 cd /home/flaskuser/venv/bin/
 source activate
 
-
-
 ```
 
 - Upgrade pip etc
@@ -116,13 +117,7 @@ source activate
 pip install --upgrade setuptools pip
 
 ```
-# TODO: add instructions for setting up postgres here
-
-
-
-
-
-## Setting up postgresql
+## Set up postgresql
 
 ### References before starting:
 
@@ -137,7 +132,7 @@ pip install --upgrade setuptools pip
 pip install psycopg2
 ```
 
-### Get the postgres system up:
+### Get the postgres system up
 
 - Download postgres
 ```
@@ -155,7 +150,7 @@ psql
 >>> \q
 # Get back into user with sudo access
 exit
-``` 
+```
 - Create password for user postgres
 ```
 sudo passwd postgres
@@ -167,20 +162,16 @@ sudo passwd postgres
 su - postgres
 # If above doesn't work, try sudo -i -u postgres
 
-# Create a user who will access the database. I am calling this user flaskuser
-createuser --pwprompt --interactive
-# When it asks whether user is superuser say yes
-# Save password securely
 
 # Create a database named superset
 createdb superset
 
 # Test the db.
 psql superset
-superset=# 
-#This is working 
+superset=#
+#This is working
 
-# Grant user access
+# Grant flaskuser access to the database
 superset=# CREATE USER flaskuser WITH PASSWORD 'jw8s0F4';
 superset=# CREATE SCHEMA superset;
 superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO flaskuser;
@@ -190,18 +181,22 @@ superset=# \q
 ```
 - Ensure you are still user postgres
 - Edit /etc/postgresql/9.5/main/pg_hba.conf
+
 ```
 nano /etc/postgresql/9.5/main/pg_hba.conf
 ```
 - Change the file as below
+
 ```
 # "local" is for Unix domain socket connections only
 # local    all        all             peer
-# change above to 
+# change above to
 local    all        all             md5
 
 ```
+
 - Return to normal unix shell as flaskuser
+
 ```
 # exit postgres user
 exit
@@ -215,6 +210,7 @@ psql -U flaskuser -W superset
 ```
 
 - Check that postgres is working at any time (say after restart)
+
 ```
 htop
 # if command doesn't work, then 'sudo apt-get install htop'
@@ -245,7 +241,7 @@ cd ~
 
 # Install superset again. This step can be skipped also
 pip install superset
-# Almost everything shoudl say already installed. Make sure no errors. 
+# Almost everything shoudl say already installed. Make sure no errors.
 
 # Initialize the database
 superset db upgrade
@@ -318,15 +314,17 @@ $ python
 >>> #import sys library
 >>> import sys
 >>> for p in sys.path:
->>>		print(p)	
+>>>		print(p)
 >>> # for python 2.7 use 'print p'
 >>> exit()
 ```
 - choose one of the paths printed there for saving superset_config.py
 - I chose /home/flaskuser/venv/local/lib/python2.7/site-packages/superset_config.py
+
 ```
 # Create a new config file
 nano /home/flaskuser/venv/local/lib/python2.7/site-packages/superset_config.py
+
 ```
 - The base settings of the file are as follows:
 
@@ -396,7 +394,7 @@ psql
 >>> \q
 # Get back into user with sudo access
 exit
-``` 
+```
 - Create password for user postgres
 ```
 sudo passwd postgres
@@ -418,8 +416,8 @@ createdb superset
 
 # Test the db.
 psql superset
-superset=# 
-#This is working 
+superset=#
+#This is working
 
 # Grant user access
 superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO flaskuser;
@@ -436,7 +434,7 @@ nano /etc/postgresql/9.5/main/pg_hba.conf
 ```
 # "local" is for Unix domain socket connections only
 # local    all        all             peer
-# change above to 
+# change above to
 local    all        all             md5
 
 ```
@@ -463,11 +461,13 @@ htop
 ### Changing superset_config.py
 
 - Change the superset_config.py to reflect the following db changes:
+
 ```
 # Change the line
 # SQLALCHEMY_DATABASE_URI = 'sqlite:////home/flaskuser/.superset/superset.db'
 # to
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localhost/superset'
+
 ```
 
 ### Check whether postgres working
@@ -484,7 +484,7 @@ cd ~
 
 # Install superset again. This step can be skipped also
 pip install superset
-# Almost everything shoudl say already installed. Make sure no errors. 
+# Almost everything shoudl say already installed. Make sure no errors.
 
 # Initialize the database
 superset db upgrade
@@ -552,7 +552,7 @@ redis-cli monitor
 - Flush Cache
 ```
 # Enter the command prompt
-redis-cli 
+redis-cli
 
 > # In the command prompt flushall to purge cache
 > flushall
@@ -652,7 +652,7 @@ MAPBOX_API_KEY = 'pk.eyJ1IjoicmFodWwtbWFkZHkiLCJhIjoiY2o0YTF2OTBrMHRxcTJxbzZxcm5
 - What we are looking for on nginx is to run a reverse proxy. The actual server is gunicorn sitting in front of flask, which is the framework hosting superset
 - Some references for this section: [Nginx with Reverse Proxy ](https://www.nginx.com/resources/admin-guide/reverse-proxy/), [nginx.conf for optimized performance](https://www.linode.com/docs/web-servers/nginx/configure-nginx-for-optimized-performance), [ Setting up postgres nginx and gunicorn ](https://www.digitalocean.com/community/tutorials/how-to-set-up-django-with-postgres-nginx-and-gunicorn-on-debian-8 ),  [How to install nginx ](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-16-04)
 
- 
+
 ### Install Nginx
 
 - Install commands
@@ -779,8 +779,8 @@ sudo nano superset.conf
 - create a really simple config file to start off. We will change this later.
 ```
 server {
-        listen   80; 
-        server_name your.domain.com; 
+        listen   80;
+        server_name your.domain.com;
 
         location / {
 			proxy_buffers 16 4k;
@@ -807,7 +807,7 @@ sudo nginx -s reload
 #Output
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-``` 
+```
 
 ### Test Server
 
@@ -849,7 +849,7 @@ sudo apt-get install certbot
 ### Obtain certificate
 
 - First some prerequisites:
-  * We will be using the 'well-known' application to help us with the 
+  * We will be using the 'well-known' application to help us with the
   * We are using letsencrypt which gives us the certificate for free
   * But it needs to verify our site first. It does this by doing some checks (which it calls challenges) within http://sub.domain.com/.well-known
 
@@ -874,8 +874,8 @@ server {
     listen 80;
     server_name sub.domain.com www.sub.domain.com;
     […]
-	
-	
+
+
 	# Add the below
     location /.well-known {
             alias /var/www/html/.well-known;
@@ -1058,10 +1058,8 @@ sudo grep -rnwl '#7b0051' /home/flaskuser/venv/local/lib/python2.7/site-packages
 /home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/javascripts/modules/colors.copy
 /home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/coverage/lcov-report/javascripts/modules/colors.js.html
 ```
-- You can do a sed replace after a grep search for each of the colours in the colour scheme 'bnbcolors' with your own 
+- You can do a sed replace after a grep search for each of the colours in the colour scheme 'bnbcolors' with your own
 - reference: [How to grep and replace ](https://stackoverflow.com/questions/15402770/how-to-grep-and-replace)
 ```
 grep -rl matchstring somedir/ | xargs sed -i 's/string1/string2/g'
 ```
-
-

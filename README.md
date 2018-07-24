@@ -65,8 +65,189 @@ systemctl status nginx
 - We don't have https set up yet but we can test nginx on http
 - Open a web browser and enter http://your-instance-IP , you should get an nginx welcome screen
 
+## Set up a domain name registrar
+Google compute instances have an ephemeral IP address by default. This means that you will be assigned a new IP address any time the instance reboots. In order to point a domain like www.mycooldomainname.com at your instance you need a static IP.
+- Follow the instructions at the [Google Reserving a Static External IP Address](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address#IP_assign) for an existing instance.
+- Log in to [Google Domains](https://domains.google.com/) and buy a domain
+- Once the domain is functional, go to the Configure DNS tab and enter the static IP address you reserved into the "Registered Hosts" and the default "A" record under "Custom resource records".
+- It can take up to 48 hours for your domain to be up worldwide but usually, it will be up in minutes if you are in the U.S.
+- Open a browser and type http://mycooldomainname.com If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
+## Getting SSL Up
+
+- We will be using Let's encrypt for SSL.
+- The references for this section: [Digital Ocean: Getting letsencrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-14-04), [Server Fault answer on how to setup letsencrypt with reverse proxy ](https://serverfault.com/questions/768509/lets-encrypt-with-an-nginx-reverse-proxy/784940#784940?newreg=eb9dc440179b4c97a8eb9c642c377eae), [ Raymii.org strong security](https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html)
+
+### Install certbot
+
+```
+# Add the repo
+sudo add-apt-repository ppa:certbot/certbot
+
+# Update apt-get
+sudo apt-get update
+
+# Install certbot
+sudo apt-get install certbot
+```
+
+### Obtain certificate
+
+- First some prerequisites:
+  * We will be using the 'well-known' application to help us with the
+  * We are using letsencrypt which gives us the certificate for free
+  * But it needs to verify our site first. It does this by doing some checks (which it calls challenges) within http://sub.domain.com/.well-known
+
+- Create some folders for nginx to redirect /.well-known requests
+```
+# Go to below folder. If html directory doesn't exist within www, you can create the same with mkdir command as below
+cd /var/www/html/
+#make directory .well-known. we will be redirecting nginx requests here.
+mkdir .well-known
+
+# Go back to nginx directory
+cd /etc/nginx/sites-available
+```
+- Go to the nginx config file
+```
+sudo nano /etc/nginx/sites-available/superset.conf
+```
+
+- Change it slightly to allow letsencrypt to certify your site
+```
+server {
+    listen 80;
+    server_name sub.domain.com www.sub.domain.com;
+    […]
 
 
+	# Add the below
+    location /.well-known {
+            alias /var/www/html/.well-known;
+    }
+
+    location / {
+        # proxy commands go here
+        […]
+    }
+}
+```
+
+- Now, you can use the certbot client to request a certificate from Let's Encrypt using the webroot plugin (as root):
+
+```
+certbot certonly --webroot -w /var/www/sub.domain.com/ -d sub.domain.com -d www.sub.domain.com
+```
+
+- The certificate is now installed in /etc/letsencrypt/live/sub.domain.com/
+```
+ls /etc/letsencrypt/live/sub.domain.com/
+```
+
+- Now establish some strong security
+```
+#Establish a 2048 bit diffie Helman group Params
+sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+```
+
+- sudo nano /etc/nginx/sites-available/superset.conf
+```
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	server_name analysis.atidiv.com;
+	return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+
+	ssl_certificate /etc/letsencrypt/live/your.domain.com/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/your.domain.com/privkey.pem;
+
+	# from https://cipherli.st/
+	# and https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+	ssl_prefer_server_ciphers on;
+	ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
+	ssl_ecdh_curve secp384r1;
+	ssl_session_cache shared:SSL:10m;
+	ssl_session_tickets off;
+	ssl_stapling on;
+	ssl_stapling_verify on;
+	resolver 8.8.8.8 8.8.4.4 valid=300s;
+	resolver_timeout 5s;
+	# Disable preloading HSTS for now.  You can use the commented out header line that includes
+	# the "preload" directive if you understand the implications.
+	#add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+	add_header Strict-Transport-Security "max-age=63072000; includeSubdomains";
+	add_header X-Frame-Options DENY;
+	add_header X-Content-Type-Options nosniff;
+
+	ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
+
+    # Uncomment this line only after testing in browsers,
+    # as it commits you to continuing to serve your site over HTTPS
+    # in future
+    add_header Strict-Transport-Security "max-age=31536000";
+
+    access_log /var/log/nginx/sub.log combined;
+
+    server_name your.domain.com;
+
+	location /.well-known {
+		alias /var/www/html/.well-known;
+	}
+
+    location / {
+			proxy_buffers 16 4k;
+			proxy_buffer_size 2k;
+			proxy_pass http://127.0.0.1:8000;
+			#from linode nginx optimizer
+			proxy_set_header   Host             $host;
+			proxy_set_header   X-Real-IP        $remote_addr;
+			proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
+			proxy_connect_timeout      90;
+			proxy_send_timeout         90;
+			proxy_read_timeout         90;
+			proxy_busy_buffers_size    4k;
+			proxy_temp_file_write_size 4k;
+			proxy_temp_path            /etc/nginx/proxy_temp;
+    }
+
+}
+
+```
+- Reload nginx after change
+```
+sudo nginx -s reload
+```
+
+### Renewing
+
+- run the certbot renew command
+```
+certbot renew --renew-hook "service nginx reload"
+```
+- Add to crontab
+```
+# at 4:47am/pm, renew all Let's Encrypt certificates over 60 days old
+47 4,16   * * *   root   certbot renew --quiet --renew-hook "service nginx reload"
+```
+- Dry run he renewal
+```
+certbot --dry-run renew
+```
+- Force early renewal to test
+```
+certbot renew --force-renew --renew-hook "service nginx reload"
+```
+---
+
+
+
+# edit here
 ## Getting the first working Superset version up
 - This will create superset directories and config files we will be editing
 - Setup the user who will be controlling superset

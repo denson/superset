@@ -75,23 +75,6 @@ Google compute instances have an ephemeral IP address by default. This means tha
 
 ## Getting the first working Superset version up
 - This will create superset directories and config files we will be editing
-- Setup the user who will be controlling superset
-
-```
-#Add User on who's account the superset will run
-sudo adduser flaskuser
-# make sure you remember the username and password
-
-# Add sudo privileges to user
-sudo usermod -a -G sudo flaskuser
-
-# Change to that user and go to base directory
-su flaskuser
-cd ~
-pwd
-# /home/flaskuser
-
-```
 - Add the basic dependencies
 
 ```
@@ -114,7 +97,7 @@ virtualenv venv
 
 
 # Activate venv
-cd /home/flaskuser/venv/bin/
+cd /home//venv/bin/
 source activate
 
 ```
@@ -357,10 +340,10 @@ psql superset
 superset=#
 #This is working
 
-# Grant flaskuser access to the database
-superset=# CREATE USER flaskuser WITH PASSWORD 'jw8s0F4';
+# Grant installer access to the database
+superset=# CREATE USER installer WITH PASSWORD 'jw8s0F4';
 superset=# CREATE SCHEMA superset;
-superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO flaskuser;
+superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO installer;
 
 # exit
 superset=# \q
@@ -381,7 +364,7 @@ local    all        all             md5
 
 ```
 
-- Return to normal unix shell as flaskuser
+- Return to normal unix shell as installer
 
 ```
 # exit postgres user
@@ -392,7 +375,7 @@ sudo service postgresql restart
 su - postgres
 
 # test the service
-psql -U flaskuser -W superset
+psql -U installer -W superset
 ```
 
 - Check that postgres is working at any time (say after restart)
@@ -408,9 +391,9 @@ htop
 - Change the superset_config.py to reflect the following db changes:
 ```
 # Change the line
-# SQLALCHEMY_DATABASE_URI = 'sqlite:////home/flaskuser/.superset/superset.db'
+# SQLALCHEMY_DATABASE_URI = 'sqlite:////home/installer/.superset/superset.db'
 # to
-SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localhost/superset'
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://installer:your_password@localhost/superset'
 ```
 
 ### Check whether postgres working
@@ -418,8 +401,8 @@ SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localho
 - Now do the following steps to ensure postgres working
 
 ```
-# Login as flaskuser
-sudo su flaskuser
+# Login as installer
+sudo su installer
 
 # activate virtualenvironment
 cd ~
@@ -505,11 +488,11 @@ $ python
 >>> exit()
 ```
 - choose one of the paths printed there for saving superset_config.py
-- I chose /home/flaskuser/venv/local/lib/python2.7/site-packages/superset_config.py
+- I chose /home/installer/venv/local/lib/python2.7/site-packages/superset_config.py
 
 ```
 # Create a new config file
-nano /home/flaskuser/venv/local/lib/python2.7/site-packages/superset_config.py
+nano /home/installer/venv/local/lib/python2.7/site-packages/superset_config.py
 
 ```
 - The base settings of the file are as follows:
@@ -535,7 +518,7 @@ SECRET_KEY = '\2\mthisismyscretkey\1\2\a\b\y\h'
 # superset metadata (slices, connections, tables, dashboards, ...).
 # Note that the connection information to connect to the datasources
 # you want to explore are managed directly in the web UI
-SQLALCHEMY_DATABASE_URI = 'sqlite:////home/flaskuser/.superset/superset.db'
+SQLALCHEMY_DATABASE_URI = 'sqlite:////home/installer/.superset/superset.db'
 
 # Flask-WTF flag for CSRF
 CSRF_ENABLED = True
@@ -592,7 +575,7 @@ sudo passwd postgres
 su - postgres
 # If above doesn't work, try sudo -i -u postgres
 
-# Create a user who will access the database. I am calling this user flaskuser
+# Create a user who will access the database. I am calling this user installer
 createuser --pwprompt --interactive
 # When it asks whether user is superuser say yes
 # Save password securely
@@ -606,7 +589,7 @@ superset=#
 #This is working
 
 # Grant user access
-superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO flaskuser;
+superset=# GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA superset TO installer;
 
 # exit
 superset=# \q
@@ -624,7 +607,7 @@ nano /etc/postgresql/9.5/main/pg_hba.conf
 local    all        all             md5
 
 ```
-- Return to normal unix shell as flaskuser
+- Return to normal unix shell as installer
 ```
 # exit postgres user
 exit
@@ -634,7 +617,7 @@ sudo service postgresql restart
 su - postgres
 
 # test the service
-psql -U flaskuser -W superset
+psql -U installer -W superset
 ```
 
 - Check that postgres is working at any time (say after restart)
@@ -650,9 +633,9 @@ htop
 
 ```
 # Change the line
-# SQLALCHEMY_DATABASE_URI = 'sqlite:////home/flaskuser/.superset/superset.db'
+# SQLALCHEMY_DATABASE_URI = 'sqlite:////home/installer/.superset/superset.db'
 # to
-SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localhost/superset'
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://installer:your_password@localhost/superset'
 
 ```
 
@@ -661,8 +644,8 @@ SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localho
 - Now do the following steps to ensure postgres working
 
 ```
-# Login as flaskuser
-sudo su flaskuser
+# Login as installer
+sudo su installer
 
 # activate virtualenvironment
 cd ~
@@ -747,9 +730,9 @@ redis-cli
 ### Install Redis for python
 
 - Reference here: [Redis for Python ](https://pypi.python.org/pypi/redis)
-- Ensure you are logged in as flaskuser
+- Ensure you are logged in as installer
 ```
-sudo su flaskuser
+sudo su installer
 ```
 - Activate environment
 ```
@@ -794,7 +777,7 @@ SECRET_KEY = '\2\mthisismyscretkey\1\2\a\b\y\h'
 # superset metadata (slices, connections, tables, dashboards, ...).
 # Note that the connection information to connect to the datasources
 # you want to explore are managed directly in the web UI
-SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://flaskuser:your_password@localhost/superset'
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://installer:your_password@localhost/superset'
 
 # Flask-WTF flag for CSRF
 CSRF_ENABLED = True
@@ -1000,8 +983,8 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 - This is a good time to test whether server works (without the SSL bit)
 
 ```
-# Login as flaskuser
-sudo su flaskuser
+# Login as installer
+sudo su installer
 
 # activate virtualenvironment
 cd ~
@@ -1199,8 +1182,8 @@ screen
 >Press enter
 > New terminal session
 
-# Change user to flaskuser
-sudo su flaskuser
+# Change user to installer
+sudo su installer
 
 # Go to home directory
 cd ~
@@ -1234,18 +1217,19 @@ superset runserver - p 8000
 
 - grep search for any the colours on this page [Colours used by superset ](https://github.com/ApacheInfra/superset/blob/master/superset/assets/javascripts/modules/colors.js )
 ```
-sudo grep -rnwl '#7b0051' /home/flaskuser/venv/local/lib/python2.7/site-packages/superset
+sudo grep -rnwl '#7b0051' /home/installer/venv/local/lib/python2.7/site-packages/superset
 # Results as follows
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/data/__pycache__/__init__.cpython-35.pyc
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/data/__init__.py
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/data/__init__.pyc
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/dist/explore.f6a614ef75857893cf0e.entry.js
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/dist/dashboard.e444b819184014cf5be3.entry.js
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/javascripts/modules/colors.copy
-/home/flaskuser/venv/local/lib/python2.7/site-packages/superset/static/assets/coverage/lcov-report/javascripts/modules/colors.js.html
+/home/installer/venv/local/lib/python2.7/site-packages/superset/data/__pycache__/__init__.cpython-35.pyc
+/home/installer/venv/local/lib/python2.7/site-packages/superset/data/__init__.py
+/home/installer/venv/local/lib/python2.7/site-packages/superset/data/__init__.pyc
+/home/installer/venv/local/lib/python2.7/site-packages/superset/static/assets/dist/explore.f6a614ef75857893cf0e.entry.js
+/home/installer/venv/local/lib/python2.7/site-packages/superset/static/assets/dist/dashboard.e444b819184014cf5be3.entry.js
+/home/installer/venv/local/lib/python2.7/site-packages/superset/static/assets/javascripts/modules/colors.copy
+/home/installer/venv/local/lib/python2.7/site-packages/superset/static/assets/coverage/lcov-report/javascripts/modules/colors.js.html
 ```
 - You can do a sed replace after a grep search for each of the colours in the colour scheme 'bnbcolors' with your own
 - reference: [How to grep and replace ](https://stackoverflow.com/questions/15402770/how-to-grep-and-replace)
 ```
 grep -rl matchstring somedir/ | xargs sed -i 's/string1/string2/g'
 ```
+

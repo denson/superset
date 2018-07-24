@@ -66,15 +66,15 @@ sudo systemctl status nginx
 - Open a web browser and enter http://your-instance-IP , you should get an nginx welcome screen
 
 ## Set up a domain name registrar
-Google compute instances have an ephemeral IP address by default. This means that you will be assigned a new IP address any time the instance reboots. In order to point a domain like www.mycooldomainname.com at your instance you need a static IP.
+Google compute instances have an ephemeral IP address by default. This means that you will be assigned a new IP address any time the instance reboots. In order to point a domain like www.yourdomain.com at your instance you need a static IP.
 - Follow the instructions at the [Google Reserving a Static External IP Address](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address#IP_assign) for an existing instance.
 - Log in to [Google Domains](https://domains.google.com/) and buy a domain
 - Once the domain is functional, go to the Configure DNS tab and enter the static IP address you reserved into the "Registered Hosts" and the default "A" record under "Custom resource records".
 - It can take up to 48 hours for your domain to be up worldwide but usually, it will be up in minutes if you are in the U.S.
-- Open a browser and type http://mycooldomainname.com If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
+- Open a browser and type http://yourdomain.com If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
 
 ## Getting the first working Superset version up
-- This will create superset directories and config files we will be editing
+### This will create superset directories and config files we will be editing
 - Add the basic dependencies
 
 ```
@@ -114,8 +114,6 @@ pip install --upgrade setuptools pip
 
 ```
 # Important note, don't use sudo on any of the below commands
-
-
 
 # Install superset
 pip install superset
@@ -220,12 +218,11 @@ http {
 		include /etc/nginx/sites-enabled/*;
 
 }
-
-
 ```
 
 - If you notice this includes the files in sites-enabled. For now we should have no sites enabled.
 - You can see these files in the sites-enabled folder
+
 ```
 cd /etc/nginx/sites-enabled/
 ls
@@ -242,6 +239,7 @@ sudo nano superset.conf
 ```
 
 - create a really simple config file to start off. We will change this later.
+
 ```
 server {
         listen   80;
@@ -254,9 +252,11 @@ server {
 
         }
 }
+
 ```
 
 - Now hardlink this superset.conf into the sites-enabled folder
+
 ```
 # Hardlinking files
 sudo ln -s /etc/nginx/sites-available/superset.conf /etc/nginx/sites-enabled
@@ -273,6 +273,9 @@ sudo nginx -s reload
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+
+- You should now be able to open a browser and type http://yourdomain.com and log in to Superset
+
 # edit here
 
 ## Getting SSL Up
@@ -282,13 +285,20 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 
 ### Install certbot
 
-```
+- Documentation for this is from [Certbot](https://certbot.eff.org/lets-encrypt/debianstretch-nginx).
+
+
+
 # Update apt-get
+
 sudo apt-get update
 
 # Install certbot
 sudo apt-get install certbot
-```
+sudo apt-get install python-certbot-nginx -t stretch-backports
+
+
+
 ### Obtain certificate
 
 - First some prerequisites:
@@ -1359,4 +1369,3 @@ sudo grep -rnwl '#7b0051' /home/installer/venv/local/lib/python2.7/site-packages
 ```
 grep -rl matchstring somedir/ | xargs sed -i 's/string1/string2/g'
 ```
-

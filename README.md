@@ -106,8 +106,42 @@ source activate
 
 ```
 pip install --upgrade setuptools pip
+```
+
+
+- Now do the actual setup and see if it works
+- [Follow instructions from here](https://superset.incubator.apache.org/installation.html)
 
 ```
+# Important note, don't use sudo on any of the below commands
+
+
+
+# Install superset
+pip install superset
+
+# Create an admin user (you will be prompted to set username, first and last name before setting a password)
+fabmanager create-admin --app superset
+# I created my_first_name.last_name user here. note the password that you input here
+
+# Initialize the database
+superset db upgrade
+
+# Load some data to play with
+superset load_examples
+
+# Create default roles and permissions
+superset init
+
+# Start the web server on port 8088
+superset runserver -p 8088
+```
+
+- Go the browser and type the ip of the instance. This connects by default to the http port. This should give you superset. Login and see that it works
+
+- Now that you have it setup, don't expect to log back into it until some other steps are done
+---
+
 # edit here
 
 ## Getting SSL Up
@@ -427,38 +461,6 @@ superset runserver -p 80
 ```
 - Ensure working from a browser then close/interrupt the server by hitting ctrl+C
 
-- Now do the actual setup and see if it works
-- [Follow instructions from here](https://superset.incubator.apache.org/installation.html)
-
-```
-# Important note, don't use sudo on any of the below commands
-
-
-
-# Install superset
-pip install superset
-
-# Create an admin user (you will be prompted to set username, first and last name before setting a password)
-fabmanager create-admin --app superset
-# I created my_first_name.last_name user here. note the password that you input here
-
-# Initialize the database
-superset db upgrade
-
-# Load some data to play with
-superset load_examples
-
-# Create default roles and permissions
-superset init
-
-# Start the web server on port 80
-superset runserver -p 80
-```
-
-- Go the browser and type the ip of the instance. This connects by default to the http port. This should give you superset. Login and see that it works
-
-- Now that you have it setup, don't expect to log back into it until some other steps are done
----
 
 ## Getting it up on a domain name registrar (I have used godaddy)
 
@@ -1232,3 +1234,4 @@ sudo grep -rnwl '#7b0051' /home/installer/venv/local/lib/python2.7/site-packages
 ```
 grep -rl matchstring somedir/ | xargs sed -i 's/string1/string2/g'
 ```
+

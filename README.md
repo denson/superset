@@ -72,23 +72,6 @@ Google compute instances have an ephemeral IP address by default. This means tha
 - Once the domain is functional, go to the Configure DNS tab and enter the static IP address you reserved into the "Registered Hosts" and the default "A" record under "Custom resource records".
 - It can take up to 48 hours for your domain to be up worldwide but usually, it will be up in minutes if you are in the U.S.
 - Open a browser and type http://mycooldomainname.com If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
-## Getting SSL Up
-
-- We will be using Let's encrypt for SSL.
-- The references for this section: [Digital Ocean: Getting letsencrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-14-04), [Server Fault answer on how to setup letsencrypt with reverse proxy ](https://serverfault.com/questions/768509/lets-encrypt-with-an-nginx-reverse-proxy/784940#784940?newreg=eb9dc440179b4c97a8eb9c642c377eae), [ Raymii.org strong security](https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html)
-
-### Install certbot
-
-```
-# Add the repo
-sudo add-apt-repository ppa:certbot/certbot
-
-# Update apt-get
-sudo apt-get update
-
-# Install certbot
-sudo apt-get install certbot
-```
 
 ## Getting the first working Superset version up
 - This will create superset directories and config files we will be editing
@@ -143,6 +126,24 @@ pip install --upgrade setuptools pip
 
 ```
 # edit here
+
+## Getting SSL Up
+
+- We will be using Let's encrypt for SSL.
+- The references for this section: [Digital Ocean: Getting letsencrypt](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-14-04), [Server Fault answer on how to setup letsencrypt with reverse proxy ](https://serverfault.com/questions/768509/lets-encrypt-with-an-nginx-reverse-proxy/784940#784940?newreg=eb9dc440179b4c97a8eb9c642c377eae), [ Raymii.org strong security](https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html)
+
+### Install certbot
+
+```
+# Add the repo
+sudo add-apt-repository ppa:certbot/certbot
+
+# Update apt-get
+sudo apt-get update
+
+# Install certbot
+sudo apt-get install certbot
+```
 ### Obtain certificate
 
 - First some prerequisites:

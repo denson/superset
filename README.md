@@ -288,7 +288,7 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 - Documentation for this is from [Certbot](https://certbot.eff.org/lets-encrypt/debianstretch-nginx).
 
 
-
+```
 # Update apt-get
 
 sudo apt-get update
@@ -297,7 +297,26 @@ sudo apt-get update
 sudo apt-get install certbot
 sudo apt-get install python-certbot-nginx -t stretch-backports
 
+# We need an empty file named "default" in the sites-available directory
+cd /etc/nginx/sites-available
+sudo nano default
+# save and close the empty file
 
+# run certbot
+sudo certbot --nginx
+# follow the bots instructions
+
+```
+- Near the end of the process the bot will include a link like https://www.ssllabs.com/ssltest/analyze.html?d=yourdomain.com for testing the certificate.
+- If everything is ok run superset
+
+```
+# Start the web server on port 8088
+superset runserver -p 8088
+```
+
+- You should now be able to view supereset over https!
+- https://yourdomain.com
 
 ### Obtain certificate
 
@@ -582,7 +601,7 @@ cd ~
 
 # Install superset again. This step can be skipped also
 pip install superset
-# Almost everything shoudl say already installed. Make sure no errors.
+# Almost everything should say already installed. Make sure no errors.
 
 # Initialize the database
 superset db upgrade
@@ -793,7 +812,7 @@ cd ~
 
 # Install superset again. This step can be skipped also
 pip install superset
-# Almost everything shoudl say already installed. Make sure no errors.
+# Almost everything should say already installed. Make sure no errors.
 
 # Initialize the database
 superset db upgrade

@@ -8,7 +8,7 @@
 - Click on the top left and click on compute engine
 - Click on create instance.
 - Choose standard options.
-- 2 CPU Ubuntu 16.04 instance should work. Allow HTTP and HTTPS [2 CPU's are needed because of this nginx bug](https://bugs.launchpad.net/ubuntu/+source/nginx/+bug/1581864)
+- 2 CPU Debian GNU/Linux 9 (stretch) instance should work. Allow HTTP and HTTPS [2 CPU's are needed because of this nginx bug](https://bugs.launchpad.net/ubuntu/+source/nginx/+bug/1581864)
 - The instance should be created.
 
 
@@ -58,7 +58,7 @@ sudo apt-get install nginx
 
 
 # Check nginx status
-systemctl status nginx
+sudo systemctl status nginx
 # It should be running
 # hit ctr+c to exit status if necessary
 ```
@@ -137,11 +137,142 @@ superset init
 superset runserver -p 8088
 ```
 
-- Go the browser and type the ip of the instance. This connects by default to the http port. This should give you superset. Login and see that it works
 
-- Now that you have it setup, don't expect to log back into it until some other steps are done
 ---
+### nginx conf
 
+- We will make a very simple configuration just to test things out.
+- There are two files to change, nginx.conf and the file that it includes in sites-enabled
+- Feel free to change the configuration as per requirements of your server
+- Open nginx.conf as follows:
+```
+sudo nano /etc/nginx/nginx.conf
+```
+
+- See file below
+- If you want to understand what each of these mean go to [Reference ](https://www.linode.com/docs/web-servers/nginx/configure-nginx-for-optimized-performance)
+
+```
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+
+#from linode nginx.config optimizer
+
+events {
+    worker_connections 650;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+		#from linode nginx.config optimizer
+		keepalive_requests 100000;
+
+		sendfile on;
+		tcp_nopush on;
+		tcp_nodelay on;
+		keepalive_timeout 65;
+		types_hash_max_size 2048;
+
+		client_header_timeout  3m;
+		client_body_timeout    3m;
+		send_timeout           3m;
+
+		open_file_cache max=1000 inactive=20s;
+		open_file_cache_valid 30s;
+		open_file_cache_min_uses 5;
+		open_file_cache_errors off;
+
+		gzip on;
+		gzip_min_length  1000;
+		gzip_buffers     4 4k;
+		gzip_types       text/html application/x-javascript text/css application/javascript text/javascript text/plain text/xml applica$
+		gzip_disable "MSIE [1-6]\.";
+
+		# [ debug | info | notice | warn | error | crit | alert | emerg ]
+		error_log  /var/log/nginx.error_log  warn;
+
+		log_format main      '$remote_addr - $remote_user [$time_local]  '
+		  '"$request" $status $bytes_sent '
+		  '"$http_referer" "$http_user_agent" '
+					'"$gzip_ratio"';
+
+		log_format download  '$remote_addr - $remote_user [$time_local]  '
+		  '"$request" $status $bytes_sent '
+		  '"$http_referer" "$http_user_agent" '
+					'"$http_range" "$sent_http_content_range"';
+
+		map $status $loggable {
+			~^[23]  0;
+			default 1;
+		}
+
+		#-------------from basic conf file-----------
+
+		include /etc/nginx/mime.types;
+		default_type application/octet-stream;
+
+
+		access_log /var/log/nginx/access.log;
+
+		include /etc/nginx/conf.d/*.conf;
+		include /etc/nginx/sites-enabled/*;
+
+}
+
+
+```
+
+- If you notice this includes the files in sites-enabled. For now we should have no sites enabled.
+- You can see these files in the sites-enabled folder
+```
+cd /etc/nginx/sites-enabled/
+ls
+
+# If there is anything you can remove as follows
+rm file-to-be-removed.conf
+```
+
+- Now create a config file in sites-available and hard link it to sites-enabled
+
+```
+cd /etc/nginx/sites-available
+sudo nano superset.conf
+```
+
+- create a really simple config file to start off. We will change this later.
+```
+server {
+        listen   80;
+        server_name your.domain.com;
+
+        location / {
+			proxy_buffers 16 4k;
+            proxy_buffer_size 2k;
+            proxy_pass http://127.0.0.1:8000;
+
+        }
+}
+```
+
+- Now hardlink this superset.conf into the sites-enabled folder
+```
+# Hardlinking files
+sudo ln -s /etc/nginx/sites-available/superset.conf /etc/nginx/sites-enabled
+
+# Test for syntax
+sudo nginx -t
+sudo nginx -s reload
+```
+
+- The output should look as follows:
+
+```
+#Output
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
 # edit here
 
 ## Getting SSL Up
@@ -152,9 +283,6 @@ superset runserver -p 8088
 ### Install certbot
 
 ```
-# Add the repo
-sudo add-apt-repository ppa:certbot/certbot
-
 # Update apt-get
 sudo apt-get update
 
@@ -838,7 +966,7 @@ sudo nginx -s reload
 
 
 # Check status
-systemctl status nginx
+sudo systemctl status nginx
 # It should be running
 
 
@@ -1007,9 +1135,6 @@ superset runserver -p 8000
 ### Install certbot
 
 ```
-# Add the repo
-sudo add-apt-repository ppa:certbot/certbot
-
 # Update apt-get
 sudo apt-get update
 

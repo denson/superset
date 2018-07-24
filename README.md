@@ -90,6 +90,59 @@ sudo apt-get update
 sudo apt-get install certbot
 ```
 
+## Getting the first working Superset version up
+- This will create superset directories and config files we will be editing
+- Setup the user who will be controlling superset
+
+```
+#Add User on who's account the superset will run
+sudo adduser flaskuser
+# make sure you remember the username and password
+
+# Add sudo privileges to user
+sudo usermod -a -G sudo flaskuser
+
+# Change to that user and go to base directory
+su flaskuser
+cd ~
+pwd
+# /home/flaskuser
+
+```
+- Add the basic dependencies
+
+```
+sudo apt-get update
+sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip libsasl2-dev libldap2-dev
+sudo apt-get install build-essential libssl-dev libffi-dev python3.5-dev python-pip libsasl2-dev libldap2-dev
+sudo apt-get install htop
+```
+
+- Install a virtualenvironment
+
+```
+# Install virtualenv module
+sudo pip install virtualenv
+
+# Note: as this is being written there is a problem with the latest version of pip so don't upgrade pip for now.
+
+# Create venv a virtual environment named venv
+virtualenv venv
+
+
+# Activate venv
+cd /home/flaskuser/venv/bin/
+source activate
+
+```
+
+- Upgrade pip etc
+
+```
+pip install --upgrade setuptools pip
+
+```
+# edit here
 ### Obtain certificate
 
 - First some prerequisites:
@@ -248,58 +301,7 @@ certbot renew --force-renew --renew-hook "service nginx reload"
 
 
 # edit here
-## Getting the first working Superset version up
-- This will create superset directories and config files we will be editing
-- Setup the user who will be controlling superset
 
-```
-#Add User on who's account the superset will run
-sudo adduser flaskuser
-# make sure you remember the username and password
-
-# Add sudo privileges to user
-sudo usermod -a -G sudo flaskuser
-
-# Change to that user and go to base directory
-su flaskuser
-cd ~
-pwd
-# /home/flaskuser
-
-```
-- Add the basic dependencies
-
-```
-sudo apt-get update
-sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-pip libsasl2-dev libldap2-dev
-sudo apt-get install build-essential libssl-dev libffi-dev python3.5-dev python-pip libsasl2-dev libldap2-dev
-sudo apt-get install htop
-```
-
-- Install a virtualenvironment
-
-```
-# Install virtualenv module
-sudo pip install virtualenv
-
-# Note: as this is being written there is a problem with the latest version of pip so don't upgrade pip for now.
-
-# Create venv a virtual environment named venv
-virtualenv venv
-
-
-# Activate venv
-cd /home/flaskuser/venv/bin/
-source activate
-
-```
-
-- Upgrade pip etc
-
-```
-pip install --upgrade setuptools pip
-
-```
 ## Set up postgresql
 
 ### References before starting:

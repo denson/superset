@@ -177,6 +177,9 @@ http {
 		client_body_timeout    3m;
 		send_timeout           3m;
 
+    # increases the maxiumum size of a csv that can be uploaded to 100 MB
+    client_max_body_size 100M;
+
 		open_file_cache max=1000 inactive=20s;
 		open_file_cache_valid 30s;
 		open_file_cache_min_uses 5;

@@ -29,7 +29,7 @@
 
 ## Nginx
 
-- What we are looking for on nginx is to run a reverse proxy. The actual server is gunicorn sitting in front of flask, which is the framework hosting superset
+- We are using [nginx](https://nginx.org/en/) as a reverse proxy. The actual server is gunicorn sitting in front of flask, which is the framework hosting superset.
 - Some references for this section: [Nginx with Reverse Proxy ](https://www.nginx.com/resources/admin-guide/reverse-proxy/), [nginx.conf for optimized performance](https://www.linode.com/docs/web-servers/nginx/configure-nginx-for-optimized-performance), [ Setting up postgres nginx and gunicorn ](https://www.digitalocean.com/community/tutorials/how-to-set-up-django-with-postgres-nginx-and-gunicorn-on-debian-8 ),  [How to install nginx ](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-16-04)
 
 

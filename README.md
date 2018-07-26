@@ -67,11 +67,13 @@ sudo systemctl status nginx
 
 ## Set up a domain name registrar
 Google compute instances have an ephemeral IP address by default. This means that you will be assigned a new IP address any time the instance reboots. In order to point a domain like www.yourdomain.com at your instance you need a static IP.
-- Follow the instructions at the [Google Reserving a Static External IP Address](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address#IP_assign) for an existing instance.
+- In the Google Cloud Platform console stop the instance you just created.
+- Follow the instructions at the [Google Reserving a Static External IP Address](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address#IP_assign) for an existing instance. Don't forget to click the "save" button to save the changes.
+- Restart the instance and verify that the external IP is now static.
 - Log in to [Google Domains](https://domains.google.com/) and buy a domain
 - Once the domain is functional, go to the Configure DNS tab and enter the static IP address you reserved into the "Registered Hosts" and the default "A" record under "Custom resource records".
 - It can take up to 48 hours for your domain to be up worldwide but usually, it will be up in minutes if you are in the U.S.
-- Open a browser and type http://yourdomain.com If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
+- Open a browser and type http://yourdomain.com (make sure to use http not https) If you have waited long enough (and everything is working) you should see the same nginx status page you saw in the last section.
 
 ## Getting the first working Superset version up
 ### This will create superset directories and config files we will be editing

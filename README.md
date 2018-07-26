@@ -61,6 +61,7 @@ sudo apt-get install nginx
 sudo systemctl status nginx
 # It should be running
 # hit ctr+c to exit status if necessary
+
 ```
 - We don't have https set up yet but we can test nginx on http
 - Open a web browser and enter http://your-instance-IP , you should get an nginx welcome screen
@@ -77,6 +78,16 @@ Google compute instances have an ephemeral IP address by default. This means tha
 
 ## Getting the first working Superset version up
 ### This will create superset directories and config files we will be editing
+
+- SSH back into the instance and switch to the installer Account
+
+```
+su installer
+cd ~
+pwd
+# /home/installer
+```
+
 - Add the basic dependencies
 
 ```
@@ -111,8 +122,8 @@ pip install --upgrade setuptools pip
 ```
 
 
-- Now do the actual setup and see if it works
-- [Follow instructions from here](https://superset.incubator.apache.org/installation.html)
+## Install Superset
+- [Reference](https://superset.incubator.apache.org/installation.html)
 
 ```
 # Important note, don't use sudo on any of the below commands
@@ -127,6 +138,7 @@ fabmanager create-admin --app superset
 # Initialize the database
 superset db upgrade
 
+# For testing only, don't load samples for production.
 # Load some data to play with
 superset load_examples
 
@@ -136,7 +148,7 @@ superset init
 # Start the web server on port 8088
 superset runserver -p 8088
 ```
-
+- Superset is now running, however you will not be able to access it through the web until we configure Nginx
 
 ---
 ### nginx conf
@@ -179,8 +191,8 @@ http {
 		client_body_timeout    3m;
 		send_timeout           3m;
 
-    # increases the maxiumum size of a csv that can be uploaded to 100 MB
-    client_max_body_size 100M;
+		# increases the maxiumum size of a csv that can be uploaded to 100 MB
+		client_max_body_size 100M;
 
 		open_file_cache max=1000 inactive=20s;
 		open_file_cache_valid 30s;
@@ -231,9 +243,9 @@ http {
 ```
 cd /etc/nginx/sites-enabled/
 ls
-
-# If there is anything you can remove as follows
-rm file-to-be-removed.conf
+# You will probably see a file named "default"
+# You can remove as follows
+sudo rm default
 ```
 
 - Now create a config file in sites-available and hard link it to sites-enabled
@@ -253,7 +265,7 @@ server {
         location / {
 			proxy_buffers 16 4k;
             proxy_buffer_size 2k;
-            proxy_pass http://127.0.0.1:8000;
+            proxy_pass http://127.0.0.1:8088;
 
         }
 }
@@ -278,10 +290,18 @@ sudo nginx -s reload
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+- Check to see if there are any errors. If there is a warning about duplicate mime types, ignore it.
+- Restart Superset
+
+```
+# Start the web server on port 8088
+superset runserver -p 8088
+
+```
 
 - You should now be able to open a browser and type http://yourdomain.com and log in to Superset
 
-# edit here
+
 
 ## Getting SSL Up
 
@@ -323,139 +343,8 @@ superset runserver -p 8088
 - You should now be able to view supereset over https!
 - https://yourdomain.com
 
-### Obtain certificate
-
-- First some prerequisites:
-  * We will be using the 'well-known' application to help us with the
-  * We are using letsencrypt which gives us the certificate for free
-  * But it needs to verify our site first. It does this by doing some checks (which it calls challenges) within http://sub.domain.com/.well-known
-
-- Create some folders for nginx to redirect /.well-known requests
-```
-# Go to below folder. If html directory doesn't exist within www, you can create the same with mkdir command as below
-cd /var/www/html/
-#make directory .well-known. we will be redirecting nginx requests here.
-mkdir .well-known
-
-# Go back to nginx directory
-cd /etc/nginx/sites-available
-```
-- Go to the nginx config file
-```
-sudo nano /etc/nginx/sites-available/superset.conf
-```
-
-- Change it slightly to allow letsencrypt to certify your site
-```
-server {
-    listen 80;
-    server_name sub.domain.com www.sub.domain.com;
-    […]
-
-
-	# Add the below
-    location /.well-known {
-            alias /var/www/html/.well-known;
-    }
-
-    location / {
-        # proxy commands go here
-        […]
-    }
-}
-```
-
-- Now, you can use the certbot client to request a certificate from Let's Encrypt using the webroot plugin (as root):
-
-```
-certbot certonly --webroot -w /var/www/sub.domain.com/ -d sub.domain.com -d www.sub.domain.com
-```
-
-- The certificate is now installed in /etc/letsencrypt/live/sub.domain.com/
-```
-ls /etc/letsencrypt/live/sub.domain.com/
-```
-
-- Now establish some strong security
-```
-#Establish a 2048 bit diffie Helman group Params
-sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
-```
-
-- sudo nano /etc/nginx/sites-available/superset.conf
-```
-server {
-	listen 80 default_server;
-	listen [::]:80 default_server;
-	server_name analysis.atidiv.com;
-	return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl;
-
-	ssl_certificate /etc/letsencrypt/live/your.domain.com/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/your.domain.com/privkey.pem;
-
-	# from https://cipherli.st/
-	# and https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
-
-	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-	ssl_prefer_server_ciphers on;
-	ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
-	ssl_ecdh_curve secp384r1;
-	ssl_session_cache shared:SSL:10m;
-	ssl_session_tickets off;
-	ssl_stapling on;
-	ssl_stapling_verify on;
-	resolver 8.8.8.8 8.8.4.4 valid=300s;
-	resolver_timeout 5s;
-	# Disable preloading HSTS for now.  You can use the commented out header line that includes
-	# the "preload" directive if you understand the implications.
-	#add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
-	add_header Strict-Transport-Security "max-age=63072000; includeSubdomains";
-	add_header X-Frame-Options DENY;
-	add_header X-Content-Type-Options nosniff;
-
-	ssl_dhparam /etc/ssl/certs/dhparam.pem;
-
-
-    # Uncomment this line only after testing in browsers,
-    # as it commits you to continuing to serve your site over HTTPS
-    # in future
-    add_header Strict-Transport-Security "max-age=31536000";
-
-    access_log /var/log/nginx/sub.log combined;
-
-    server_name your.domain.com;
-
-	location /.well-known {
-		alias /var/www/html/.well-known;
-	}
-
-    location / {
-			proxy_buffers 16 4k;
-			proxy_buffer_size 2k;
-			proxy_pass http://127.0.0.1:8000;
-			#from linode nginx optimizer
-			proxy_set_header   Host             $host;
-			proxy_set_header   X-Real-IP        $remote_addr;
-			proxy_set_header  X-Forwarded-For  $proxy_add_x_forwarded_for;
-			proxy_connect_timeout      90;
-			proxy_send_timeout         90;
-			proxy_read_timeout         90;
-			proxy_busy_buffers_size    4k;
-			proxy_temp_file_write_size 4k;
-			proxy_temp_path            /etc/nginx/proxy_temp;
-    }
-
-}
-
-```
-- Reload nginx after change
-```
-sudo nginx -s reload
-```
+# This is where we are in testing
+# TODO: pick up here and set up auto renewal of certs
 
 ### Renewing
 
@@ -480,7 +369,7 @@ certbot renew --force-renew --renew-hook "service nginx reload"
 
 
 
-# edit here
+
 
 ## Set up postgresql
 
@@ -667,8 +556,8 @@ nano /home/installer/venv/local/lib/python2.7/site-packages/superset_config.py
 #---------------------------------------------------------
 ROW_LIMIT = 5000
 SUPERSET_WORKERS = 4
-# You will be serving site on port 8000 from gunicorn which sits in front of flask, and then send to nginx
-SUPERSET_WEBSERVER_PORT = 8000
+# You will be serving site on port 8088 from gunicorn which sits in front of flask, and then send to nginx
+SUPERSET_WEBSERVER_PORT = 8088
 #---------------------------------------------------------
 
 #---------------------------------------------------------
@@ -927,7 +816,7 @@ pip install redis
 ROW_LIMIT = 5000
 SUPERSET_WORKERS = 4
 
-SUPERSET_WEBSERVER_PORT = 8000
+SUPERSET_WEBSERVER_PORT = 8088
 #---------------------------------------------------------
 
 #---------------------------------------------------------
@@ -1118,7 +1007,7 @@ server {
         location / {
 			proxy_buffers 16 4k;
             proxy_buffer_size 2k;
-            proxy_pass http://127.0.0.1:8000;
+            proxy_pass http://127.0.0.1:8088;
 
         }
 }
@@ -1154,8 +1043,8 @@ sudo su installer
 cd ~
 . ./venv/bin/activate
 
-# Start the web server on port 8000 (Note that we have changed the server port)
-superset runserver -p 8000
+# Start the web server on port 8088 (Note that we have changed the server port)
+superset runserver -p 8088
 ```
 - Ensure working from a browser then close/interrupt the server by hitting ctrl+C
 - If above is not working, go back and ensure all steps followed
@@ -1289,7 +1178,7 @@ server {
     location / {
 			proxy_buffers 16 4k;
 			proxy_buffer_size 2k;
-			proxy_pass http://127.0.0.1:8000;
+			proxy_pass http://127.0.0.1:8088;
 			#from linode nginx optimizer
 			proxy_set_header   Host             $host;
 			proxy_set_header   X-Real-IP        $remote_addr;
@@ -1364,8 +1253,8 @@ superset load_examples
 superset init
 # Ensure everything goes right
 
-# Start the web server on port 8000
-superset runserver - p 8000
+# Start the web server on port 8088
+superset runserver - p 8088
 
 # ctrl a+d to log off screen
 # you can type screen -r to log back into screen running server
